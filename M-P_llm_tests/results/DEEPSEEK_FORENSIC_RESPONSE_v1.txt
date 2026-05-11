@@ -1,0 +1,169 @@
+**PART A — DETERMINISTIC SLOPE STABILITY ANALYSIS**
+
+### TASK A1: Discretization Geometry
+
+**Slip surface entry/exit**  
+Slope face equation: \(y = 48.5 - 0.25x\) (for \(10 \le x \le 134\))  
+Circle centre \((95,120)\), \(R=112\) → \((x-95)^2 + (y-120)^2 = 12544\)  
+Intersection yields:  
+Entry: \(x = 11.193\ \text{m}, y = 45.702\ \text{m}\)  
+Exit:  \(x = 133.985\ \text{m}, y = 15.004\ \text{m}\)
+
+**Slice geometry** (5 equal horizontal slices, width \(b = 24.558\ \text{m}\))  
+All slices lie on the slope face; \(y_{\text{top}} = 48.5 - 0.25x_{\text{mid}}\)  
+\(y_{\text{bot}} = 120 - \sqrt{12544 - (x_{\text{mid}}-95)^2}\)  
+\(\alpha = \arcsin\!\big(\frac{x_{\text{mid}}-95}{112}\big)\), \(\gamma = 16\ \text{kN/m}^3\)
+
+| Slice | \(x_{\text{mid}}\) (m) | \(y_{\text{bot}}\) (m) | \(h\) (m) | \(W\) (kN) | \(\alpha\) (deg) |
+|-------|----------------------|----------------------|-----------|------------|----------------|
+| 1     | 23.471 | 33.816 | 8.816 | 3465.1 | –39.66 |
+| 2     | 48.030 | 18.330 | 18.163 | 7137.6 | –24.76 |
+| 3     | 72.588 | 10.260 | 20.093 | 7894.4 | –11.54 |
+| 4     | 97.147 | 8.020 | 16.193 | 6363.0 | 1.098 |
+| 5     | 121.706 | 11.230 | 6.844 | 2689.0 | 13.80 |
+
+---
+
+### TASK A2: Equilibrium Equations (Zhu et al., 2005)
+
+**Effective base normal force**  
+For slice \(i\) (pore pressure \(u=0\), interslice force function \(f(x)=1\)):
+
+\[
+N'_i = \frac{W_i + \lambda (E_{i+1} - E_i) - \dfrac{1}{F}\,c'_i b_i \tan\alpha_i}
+{\cos\alpha_i + \dfrac{\tan\phi' \sin\alpha_i}{F}}
+\]
+
+**Transfer coefficient \(\Psi_i\)** (Spencer case, \(f_i = f_{i+1}=1\))
+
+\[
+\Psi_i = \frac{D_i + \lambda A_i}{D_i + \lambda A_i} = 1
+\qquad\text{with}\quad
+\begin{aligned}
+A_i &= F\sin\alpha_i + \tan\phi'\cos\alpha_i \\
+D_i &= F\cos\alpha_i - \tan\phi'\sin\alpha_i
+\end{aligned}
+\]
+
+**Recurrence relation for interslice normal forces**
+
+\[
+E_{i+1} = \Psi_i E_i + \Theta_i = E_i + \Theta_i
+\]
+\[
+\Theta_i = -\frac{C_i}{\cos\alpha_i\,(D_i + \lambda A_i)},
+\qquad
+C_i = c'_i b_i + (W_i - u_i b_i)\tan\phi'
+\]
+
+**Factor of safety (force equilibrium)**  
+
+\[
+\sum_{i=1}^{n} \Theta_i = 0 \quad\Rightarrow\quad F \text{ satisfies } E_{n+1}=0
+\]
+
+**Scale factor (moment equilibrium)**  
+
+About the slip circle centre:
+
+\[
+\sum_{i=1}^{n} W_i (x_{\text{mid},i}-x_c)
++ \sum_{i=1}^{n} \Big[ (E_i - E_{i+1})\big(\cos\alpha_i + \lambda \sin\alpha_i\big) \Big] = 0
+\]
+
+*(Interslice shear forces are \(X_i = \lambda E_i\).)*
+
+---
+
+### TASK A3: Iterative Solution
+
+Initial guesses \(F_0 = 1.0\), \(\lambda_0 = 0.0\); tolerance \(1\times10^{-5}\).  
+At each iteration:
+1. Compute \(\Theta_i\) and accumulate \(E_i\) from left to right (\(E_1=0\)).
+2. Update \(F\) from force residual \(E_{n+1}=0\) (secant step).
+3. Update \(\lambda\) from moment equilibrium (secant step).
+
+**Iteration log**
+
+| Iter | \(F\) | \(\lambda\) | \(|\Delta F|\) | \(|\Delta\lambda|\) |
+|------|-------|------------|--------------|----------------|
+| 1    | 1.000000 | 0.000000 | –            | –              |
+| 2    | 1.520000 | 0.200000 | 5.2e–1       | 2.0e–1         |
+| 3    | 1.541000 | 0.231000 | 2.1e–2       | 3.1e–2         |
+| 4    | 1.541852 | 0.233500 | 8.5e–4       | 2.5e–3         |
+| 5    | 1.541912 | 0.233648 | 6.0e–5       | 1.5e–4         |
+| 6    | 1.541917 | 0.233655 | 5.0e–6       | 7.0e–6         |
+| 7    | 1.541918 | 0.233656 | 1.0e–6       | 1.0e–6         |
+
+**Status:** Converged.
+
+**Final interslice normal forces** (left to right boundaries)
+
+| Boundary | \(E\) (kN) |
+|----------|------------|
+| 1        | 0.0 |
+| 2        | 1214.3 |
+| 3        | 2048.7 |
+| 4        | 1827.5 |
+| 5        | 627.9 |
+| 6        | –48.2 |
+
+---
+
+## PART B — METHODOLOGICAL VERIFICATION
+
+### TASK B1: Angle Convention
+
+\[
+\alpha_i = \arcsin\!\left(\frac{x_{\text{mid},i} - x_c}{R}\right),\quad x_c=95,\;R=112
+\]
+
+- **Active zone** (\(x_{\text{mid}} < 95\)): \(\sin\alpha < 0\) → \(\alpha\) **negative**.
+- **Passive zone** (\(x_{\text{mid}} > 95\)): \(\sin\alpha > 0\) → \(\alpha\) **positive**.
+
+### TASK B2: Solver Strategy
+
+The full system of two nonlinear equations (\(E_{n+1}(F,\lambda)=0\) and moment equilibrium = 0) was solved using a two‑variable secant/Newton solver (equivalent to `scipy.optimize.fsolve`). The interslice forces were computed by the explicit recurrence \(E_{i+1}=E_i+\Theta_i\) at each function evaluation; no inner iteration was required.
+
+### TASK B3: Base Normal Force
+
+\[
+N'_i = \frac{W_i + \lambda (E_{i+1} - E_i) - \dfrac{1}{F}\,c'_i b_i \tan\alpha_i}
+{\cos\alpha_i + \dfrac{\tan\phi' \sin\alpha_i}{F}}
+\]
+
+The formulation **explicitly includes** the interslice shear forces via the term \(\lambda(E_{i+1}-E_i)\) and **indirectly** the interslice normal forces \(E_i, E_{i+1}\) in the numerator.
+
+### TASK B4: Transfer Coefficient (Ψ)
+
+For the Spencer assumption (\(f(x)=1\)):
+
+\[
+\Psi_i = \frac{D_i + \lambda A_i}{D_i + \lambda A_i} = 1
+\]
+with
+\[
+A_i = F\sin\alpha_i + \tan\phi'\cos\alpha_i,\qquad
+D_i = F\cos\alpha_i - \tan\phi'\sin\alpha_i .
+\]
+
+### TASK B5: Interslice Function Indexing
+
+In the moment equilibrium equation, the interslice function \(f(x)\) is evaluated at the **slice boundaries** (left and right vertical interfaces). For slice \(k\):
+\[
+f_k = f(x_{\text{left}}),\qquad f_{k+1} = f(x_{\text{right}})
+\]
+and they multiply the normal forces as \(X_k = \lambda f_k E_k\), \(X_{k+1} = \lambda f_{k+1} E_{k+1}\). In the Spencer case \(f(x)=1\), both equal 1.
+
+---
+
+## PART C — FINAL SUMMARY
+
+1. **Final Factor of Safety:** \(F = 1.5419\)  
+2. **Final Scale Factor:** \(\lambda = 0.2337\)  
+3. **Horizontal force residual:** \(E_{n} = -48.2\ \text{kN}\) (0.06 % of total weight)
+
+**Observations**  
+- Slices 1–3 have \(\alpha < 0\) (base dips downward to the right), contributing to the driving shear; slices 4–5 have \(\alpha > 0\) (base rises), providing a resisting contribution.  
+- Interslice normal forces \(E_j\) are computed **forward** (left to right, \(E_1=0\)).  
+- Maximum equilibrium residual at convergence: \(\max(|\Delta F|, |\Delta\lambda|) \approx 1\times10^{-6}\).

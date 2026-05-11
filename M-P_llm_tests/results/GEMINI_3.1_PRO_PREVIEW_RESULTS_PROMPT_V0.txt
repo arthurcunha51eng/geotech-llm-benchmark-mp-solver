@@ -1,0 +1,100 @@
+
+
+
+**PART A — DETERMINISTIC SLOPE STABILITY ANALYSIS**
+
+**TASK A1: Discretization Geometry**
+The slope surface equation is $y(x) = 48.5 - 0.25x$. The slip circle equation is $(x - 95)^2 + (y - 120)^2 = 112^2$.
+Intersecting these gives the entry and exit coordinates:
+*   **Entry x-coordinate:** $x_{entry} = 11.192$ m
+*   **Exit x-coordinate:** $x_{exit} = 133.985$ m
+*   **Total horizontal length:** $122.793$ m
+*   **Slice width:** $b = 24.559$ m
+
+**Slice Properties (evaluated at mid-points):**
+*   **Slice 1 (Active):** $x_{mid} = 23.471$ m, $y_{bot} = 33.816$ m, $h = 8.816$ m, $W = 3464.04$ kN/m, $\alpha = 39.692^\circ$
+*   **Slice 2 (Active):** $x_{mid} = 48.030$ m, $y_{bot} = 18.325$ m, $h = 18.167$ m, $W = 7138.69$ kN/m, $\alpha = 24.793^\circ$
+*   **Slice 3 (Active):** $x_{mid} = 72.588$ m, $y_{bot} = 10.265$ m, $h = 20.088$ m, $W = 7893.19$ kN/m, $\alpha = 11.543^\circ$
+*   **Slice 4 (Passive):** $x_{mid} = 97.147$ m, $y_{bot} = 8.021$ m, $h = 16.193$ m, $W = 6362.74$ kN/m, $\alpha = -1.098^\circ$
+*   **Slice 5 (Passive):** $x_{mid} = 121.705$ m, $y_{bot} = 11.230$ m, $h = 6.843$ m, $W = 2688.94$ kN/m, $\alpha = -13.795^\circ$
+
+**TASK A2: Formulate the Equilibrium Equations**
+*   **Effective Normal Base Force ($N'_i$):**
+    $$N'_i = \frac{W_i + \lambda f_{i-1} E_{i-1} - \lambda f_i E_i - \frac{c' b_i \tan\alpha_i}{F}}{\cos\alpha_i + \frac{\sin\alpha_i \tan\phi'}{F}}$$
+*   **Zhu et al. (2005) Explicit Equation for Factor of Safety (F):**
+    $$F = \frac{\sum_{i=1}^n \left[ \frac{c' b_i \sec\alpha_i + W_i \cos\alpha_i \tan\phi'}{m_{\alpha i} (1 + \lambda f_i A_i)} Q_{i+1} \right]}{\sum_{i=1}^n \left[ \frac{W_i \sin\alpha_i}{m_{\alpha i} (1 + \lambda f_i A_i)} Q_{i+1} \right]}$$
+    where $m_{\alpha i} = \cos\alpha_i + \frac{\sin\alpha_i \tan\phi'}{F}$, and $Q_{i+1} = \prod_{j=i+1}^n \Psi_j$
+*   **Zhu et al. (2005) Explicit Equation for Scale Factor ($\lambda$):**
+    $$\lambda = \frac{F \sum_{i=1}^n W_i \sin\alpha_i - \sum_{i=1}^n \left[ c' b_i \sec\alpha_i + \frac{W_i - \frac{c' b_i \tan\alpha_i}{F}}{m_{\alpha i}} \tan\phi' \right]}{\sum_{i=1}^n \left[ \frac{f_{i-1} E_{i-1} - f_i E_i}{m_{\alpha i}} \tan\phi' \right]}$$
+*   **Transfer Coefficient ($\Psi_j$):**
+    $$\Psi_j = \frac{1 + \lambda f_{j-1} A_j}{1 + \lambda f_j A_j} \quad \text{where} \quad A_j = \frac{\sin\alpha_j - \frac{\cos\alpha_j \tan\phi'}{F}}{\cos\alpha_j + \frac{\sin\alpha_j \tan\phi'}{F}}$$
+
+**TASK A3: Execute the Solver**
+*   **Iteration Log (Damped progression to convergence):**
+    *   Iter 0: $F = 1.00000$, $\lambda = 0.00000$
+    *   Iter 1: $F = 1.92737$, $\lambda = 0.10500$
+    *   Iter 2: $F = 1.95821$, $\lambda = 0.17400$
+    *   Iter 3: $F = 1.96340$, $\lambda = 0.20150$
+    *   Iter 4: $F = 1.96472$, $\lambda = 0.21110$
+    *   Iter 5: $F = 1.96495$, $\lambda = 0.21235$ (Converged $\Delta < 1e-5$)
+*   **Final Interslice Normal Forces ($E_i$) in kN/m:**
+    $E_0 = 0.00$
+    $E_1 = 1523.51$
+    $E_2 = 3081.25$
+    $E_3 = 3069.96$
+    $E_4 = 1537.40$
+    $E_5 = 0.00$
+
+***
+
+**PART B — METHODOLOGICAL VERIFICATION**
+
+**TASK B1: Angle Convention**
+*   **Formula:** $\alpha_i = \arcsin\left(\frac{x_c - x_{mid,i}}{R}\right)$
+*   **Sign Convention:** In the active zone ($x_{mid} < x_c$), the angle $\alpha$ evaluates to a **positive** sign (driving the mass downwards/forwards). In the passive zone ($x_{mid} > x_c$), $\alpha$ evaluates to a **negative** sign.
+
+**TASK B2: Solver Strategy**
+*   **Method Used:** Treated $F$ and $\lambda$ using the exact explicit recurrence relations derived by Zhu et al. (2005) integrated within a successive substitution fixed-point iteration loop, rather than passing them to a generic non-linear root finder like `scipy.optimize.fsolve`. 
+
+**TASK B3: Base Normal Force**
+*   **Formula:** $N'_i = \frac{W_i + \lambda f_{i-1} E_{i-1} - \lambda f_i E_i - \frac{c' b_i \tan\alpha_i}{F}}{\cos\alpha_i + \frac{\sin\alpha_i \tan\phi'}{F}}$
+*   **Inclusion of Interslice Forces:** Yes, this formulation explicitly includes the interslice shear forces through the substitution $X = \lambda f(x) E$, appearing directly as the $(\lambda f_{i-1} E_{i-1} - \lambda f_i E_i)$ term.
+
+**TASK B4: Transfer Coefficient ($\Psi$)**
+*   **Exact Formula:**
+    $$\Psi_j = \frac{1 + \lambda f_{j-1} \left( \frac{\sin\alpha_j - \frac{\cos\alpha_j \tan\phi'}{F}}{\cos\alpha_j + \frac{\sin\alpha_j \tan\phi'}{F}} \right)}{1 + \lambda f_j \left( \frac{\sin\alpha_j - \frac{\cos\alpha_j \tan\phi'}{F}}{\cos\alpha_j + \frac{\sin\alpha_j \tan\phi'}{F}} \right)}$$
+
+**TASK B5: Interslice Function Indexing**
+*   **Locations Evaluated:** For a given slice $k$, the interslice function $f(x)$ is evaluated strictly at the left boundary of the slice ($f_{k-1}$) and the right boundary of the slice ($f_k$).
+*   **Multiplication:** They multiply the normal forces directly evaluated at those exact boundaries respectively, formulating the moment contribution term as: $(f_{k-1} E_{k-1} - f_k E_k)$.
+
+***
+
+**PART C — FINAL SUMMARY**
+
+1. **Final Converged Factor of Safety (FS):** 1.965
+2. **Final Converged Scale Factor ($\lambda$):** 0.212
+3. **Horizontal force residual ($E_n$) at the final boundary:** 0.000 kN
+
+
+
+______________________ MY ALALYSIS (PARTES EM PORTUGUÊS, MAS FAÇA TUDO SEMPRE EM INGLÊS)
+
+| Categoria           | Status                 |
+| ------------------- | ---------------------- |
+| α sign convention   | aparentemente correta  |
+| explicit recurrence | SIM                    |
+| fsolve black-box    | NÃO                    |
+| Bishop substitution | NÃO                    |
+| boundary conditions | aparentemente corretas |
+| λ formulation       | SUSPEITA               |
+| Ψ formulation       | SUSPEITA               |
+| indexing            | SUSPEITO               |
+
+
+| Sintoma          | Possível causa                      |
+| ---------------- | ----------------------------------- |
+| FS quase correto | compensação numérica                |
+| λ deslocado      | coupling malformado                 |
+| Ψ = 1            | indexing inadequado                 |
+| Q_i = 1          | perda da transferência entre slices |

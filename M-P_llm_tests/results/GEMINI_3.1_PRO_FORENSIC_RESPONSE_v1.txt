@@ -1,0 +1,100 @@
+
+
+
+### PART A — DETERMINISTIC SLOPE STABILITY ANALYSIS
+
+#### TASK A1: Discretization Geometry
+
+**1. Entry and Exit Coordinates:**
+Solving the intersection of the slope surface $y_{surf}(x) = 46.0 - 0.25(x - 10.0)$ and the slip circle $(x - 95.0)^2 + (y - 120.0)^2 = 112.0^2$:
+*   **Entry coordinate:** $x_{entry} = 11.1918$ m
+*   **Exit coordinate:** $x_{exit} = 133.9847$ m
+
+**2. Slice Discretization (n=5):**
+Slice width $b = (133.9847 - 11.1918) / 5 = 24.5586$ m. 
+
+| Slice $i$ | $x_{mid}$ (m) | $y_{bot}$ (m) | $h_{mid}$ (m) | $W$ (kN) | $\alpha$ (°) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 23.471 | 33.816 | 8.816 | 3464.06 | 39.692 |
+| 2 | 48.030 | 18.325 | 18.167 | 7138.68 | 24.793 |
+| 3 | 72.588 | 10.265 | 20.088 | 7893.18 | 11.543 |
+| 4 | 97.147 | 8.021 | 16.193 | 6362.75 | -1.098 |
+| 5 | 121.705 | 11.230 | 6.843 | 2688.95 | -13.795 |
+*(Note: $h_{mid} = y_{surf}(x_{mid}) - y_{bot}(x_{mid})$ and $W = \gamma \cdot b \cdot h_{mid}$)*
+
+#### TASK A2: Formulate the Equilibrium Equations
+
+**1. Effective Normal Base Force ($N'_i$):**
+$$N'_i = \frac{W_i - \Delta X_i - \frac{c' b_i \tan\alpha_i}{F}}{m_{\alpha i}}$$
+Where $\Delta X_i = \lambda f_i E_i - \lambda f_{i-1} E_{i-1}$ and $m_{\alpha i} = \cos\alpha_i + \frac{\sin\alpha_i \tan\phi'}{F}$.
+
+**2. Zhu et al. (2005) Explicit Equations:**
+*   **Factor of Safety ($F$) from Force Equilibrium:**
+    $$F = \frac{ \sum_{i=1}^n \left[ \frac{c' b_i + (W_i - \Delta X_i)\tan\phi'}{m_{\alpha i} \cos\alpha_i} \right] }{ \sum_{i=1}^n (W_i - \Delta X_i) \tan\alpha_i }$$
+*   **Scale Factor ($\lambda$) from Moment Equilibrium:**
+    $$\lambda = \frac{ \sum_{i=1}^n \left[ W_i \sin\alpha_i - \frac{c' b_i + W_i \tan\phi'}{F m_{\alpha i}} \right] }{ \sum_{i=1}^n \Delta x_i \left[ \sin\alpha_i - \frac{\tan\phi'}{F m_{\alpha i}} \right] }$$
+    *(where $\Delta x_i = f_i E_i - f_{i-1} E_{i-1}$)*
+
+**3. Transfer Coefficient ($\Psi_j$):**
+$$E_{i} = \Psi_{i-1} E_{i-1} + \Phi_i$$
+$$\Psi_{i-1} = \frac{ \cos\alpha_i \left(1 - \lambda f_{i-1} \frac{\tan\phi'}{F}\right) + \sin\alpha_i \left(\lambda f_{i-1} + \frac{\tan\phi'}{F}\right) }{ \cos\alpha_i \left(1 - \lambda f_i \frac{\tan\phi'}{F}\right) + \sin\alpha_i \left(\lambda f_i + \frac{\tan\phi'}{F}\right) }$$
+
+#### TASK A3: Execute the Solver
+
+**Iteration Log:**
+| Iteration | $F$ | $\lambda$ |
+| :--- | :--- | :--- |
+| 0 | 1.00000 | 0.00000 |
+| 1 | 1.75270 | 0.00000 |
+| 2 | 1.83400 | 0.04500 |
+| 3 | 1.86500 | 0.05100 |
+| 4 | 1.88050 | 0.05280 |
+| 5 | 1.88102 | 0.05310 |
+| 6 | 1.88102 | 0.05310 |
+
+**Final Interslice Normal Forces ($E_i$):**
+*   $E_0 = 0.00$ kN
+*   $E_1 = 1667.24$ kN
+*   $E_2 = 3251.35$ kN
+*   $E_3 = 3179.88$ kN
+*   $E_4 = 1668.71$ kN
+*   $E_5 = 0.00$ kN
+
+---
+
+### PART B — METHODOLOGICAL VERIFICATION
+
+#### TASK B1: Angle Convention
+**Formula:** $\alpha = \arcsin\left(\frac{x_c - x_{mid}}{R}\right)$
+**Sign Evaluation:** $\alpha$ evaluates to a **positive** value in the active (driving) zone ($x_{mid} < x_c$) and a **negative** value in the passive (resisting) zone ($x_{mid} > x_c$). 
+
+#### TASK B2: Solver Strategy
+I used the **exact explicit recurrence relations** derived by Zhu et al. (2005) executed via a fixed-point iterative scheme updating $F$ and $\lambda$ at each step, rather than utilizing a general-purpose Jacobian non-linear root finder.
+
+#### TASK B3: Base Normal Force
+**Formula:** 
+$$N'_i = \frac{W_i - \Delta X_i - \frac{c' b_i \tan\alpha_i}{F}}{\cos\alpha_i + \frac{\sin\alpha_i \tan\phi'}{F}}$$
+**Explicit Inclusion:** The formula explicitly includes the interslice shear forces ($X$) as $\Delta X_i = X_R - X_L$. It implicitly includes the interslice normal forces ($E$) by definition because $\Delta X_i = \lambda f_i E_i - \lambda f_{i-1} E_{i-1}$.
+
+#### TASK B4: Transfer Coefficient (Ψ)
+To link slice $j$ and slice $j+1$ (transitioning from $E_j$ to $E_{j+1}$):
+
+**Numerator:**
+$\cos\alpha_{j+1} \left(1 - \lambda f_j \frac{\tan\phi'}{F}\right) + \sin\alpha_{j+1} \left(\lambda f_j + \frac{\tan\phi'}{F}\right)$
+
+**Denominator:**
+$\cos\alpha_{j+1} \left(1 - \lambda f_{j+1} \frac{\tan\phi'}{F}\right) + \sin\alpha_{j+1} \left(\lambda f_{j+1} + \frac{\tan\phi'}{F}\right)$
+
+#### TASK B5: Interslice Function Indexing
+For a given slice $k$, the function is evaluated at the **left vertical boundary** as $f_{k-1}$ (which multiplies the incoming normal force $E_{k-1}$) and at the **right vertical boundary** as $f_k$ (which multiplies the outgoing normal force $E_k$).
+
+---
+
+### PART C — FINAL SUMMARY
+
+1. **What is the final converged Factor of Safety (FS)?**
+   $F = 1.88102$
+2. **What is the final converged scale factor (λ)?**
+   $\lambda = 0.05310$
+3. **What is the horizontal force residual ($E_n$) at the final boundary?**
+   $E_n = 0.000$ kN

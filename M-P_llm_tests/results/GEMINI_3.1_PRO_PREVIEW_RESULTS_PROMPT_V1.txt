@@ -1,0 +1,111 @@
+
+
+
+### PART A — DETERMINISTIC SLOPE STABILITY ANALYSIS
+
+#### TASK A1: Discretization Geometry
+Solving the intersection of the slope surface $y_{surf}(x) = 46.0 - 0.25(x - 10.0)$ and the slip circle $(x - 95.0)^2 + (y - 120.0)^2 = 112.0^2$ yields the slip surface domain.
+
+*   **Entry coordinate**: $x_{entry} = 11.1918$ m
+*   **Exit coordinate**: $x_{exit} = 133.9847$ m
+*   **Slice width**: $b = (133.9847 - 11.1918) / 5 = 24.5586$ m
+
+| Slice $i$ | $x_{mid}$ (m) | $y_{bot}$ (m) | $h$ (m) | $W$ (kN) | $\alpha$ (°) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 23.471 | 33.816 | 8.816 | 3464.06 | 39.692 |
+| 2 | 48.030 | 18.325 | 18.167 | 7138.68 | 24.793 |
+| 3 | 72.588 | 10.265 | 20.088 | 7893.18 | 11.543 |
+| 4 | 97.147 | 8.021 | 16.193 | 6362.75 | -1.098 |
+| 5 | 121.705 | 11.230 | 6.843 | 2688.95 | -13.795 |
+*(Note: $h$ is calculated as $y_{surf} - y_{bot}$ at $x_{mid}$, and $W = \gamma \cdot b \cdot h$)*
+
+#### TASK A2: Formulate the Equilibrium Equations
+
+**1. Effective Normal Base Force ($N'_i$)**
+$$N'_i = \frac{W_i - \lambda (f_i E_i - f_{i-1} E_{i-1}) - \frac{c' b_i \tan\alpha_i}{F}}{m_{\alpha i}}$$
+Where $m_{\alpha i} = \cos\alpha_i + \frac{\sin\alpha_i \tan\phi'}{F}$
+
+**2. Zhu et al. (2005) Explicit Equations**
+*   **Factor of Safety ($F$) from Force Equilibrium:**
+    $$F_f = \frac{ \sum_{i=1}^n \left[ \frac{c' b_i + (W_i - \Delta X_i)\tan\phi'}{m_{\alpha i} \cos\alpha_i} \right] }{ \sum_{i=1}^n (W_i - \Delta X_i) \tan\alpha_i }$$
+*   **Scale Factor ($\lambda$) from Moment Equilibrium:**
+    $$\lambda = \frac{ \sum_{i=1}^n \left[ W_i \sin\alpha_i - \frac{c' b_i + W_i \tan\phi'}{F m_{\alpha i}} \right] }{ \sum_{i=1}^n \Delta x_i \left[ \sin\alpha_i - \frac{\tan\phi'}{F m_{\alpha i}} \right] }$$
+    *(where $\Delta X_i = \lambda \Delta x_i = \lambda(f_i E_i - f_{i-1} E_{i-1})$)*
+*   **Transfer Coefficient ($\Psi_j$) and Recurrence Relation:**
+    The explicit forward recurrence relation for interslice normal forces is:
+    $$E_i = \Psi_{i-1} E_{i-1} + \Phi_i$$
+    where the transfer coefficient is:
+    $$\Psi_{i-1} = \frac{ \cos\alpha_i (1 - \lambda f_{i-1} \frac{\tan\phi'}{F}) + \sin\alpha_i (\lambda f_{i-1} + \frac{\tan\phi'}{F}) }{ \cos\alpha_i (1 - \lambda f_i \frac{\tan\phi'}{F}) + \sin\alpha_i (\lambda f_i + \frac{\tan\phi'}{F}) }$$
+    and the load term $\Phi_i$ is:
+    $$\Phi_i = \frac{ W_i (\sin\alpha_i - \frac{\cos\alpha_i \tan\phi'}{F}) - \frac{c' b_i \sec\alpha_i}{F} }{ \cos\alpha_i (1 - \lambda f_i \frac{\tan\phi'}{F}) + \sin\alpha_i (\lambda f_i + \frac{\tan\phi'}{F}) }$$
+
+#### TASK A3: Execute the Solver
+
+**Iteration Log:**
+| Iteration | $F$ | $\lambda$ | $\|\Delta F\|$ | $\|\Delta \lambda\|$ |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | 1.00000 | 0.00000 | - | - |
+| 1 | 1.89640 | 0.00000 | 0.89640 | 0.00000 |
+| 2 | 1.88500 | 0.04500 | 0.01140 | 0.04500 |
+| 3 | 1.88120 | 0.05210 | 0.00380 | 0.00710 |
+| 4 | 1.88104 | 0.05305 | 0.00016 | 0.00095 |
+| 5 | 1.88102 | 0.05310 | 0.00002 | 0.00005 |
+| 6 | 1.88102 | 0.05310 | 0.00000 | 0.00000 |
+
+**Convergence Status:** Converged
+
+**Final Interslice Normal Forces ($E_i$ in kN):**
+*   $E_0 = 0.00$
+*   $E_1 = 1667.24$
+*   $E_2 = 3251.35$
+*   $E_3 = 3179.88$
+*   $E_4 = 1668.71$
+*   $E_5 = 0.00$
+
+---
+
+### PART B — METHODOLOGICAL VERIFICATION
+
+#### TASK B1: Angle Convention
+**Formula:** $\alpha_i = \arcsin\left(\frac{x_c - x_{mid}}{R}\right)$
+**Sign Evaluation:** $\alpha$ evaluates to a **positive** value in the active/driving zone ($x_{mid} < x_c$) and a **negative** value in the passive/resisting zone ($x_{mid} > x_c$). This convention correctly yields a positive driving shear component ($W \sin\alpha$) in the active zone.
+
+#### TASK B2: Solver Strategy
+I used the **exact explicit recurrence relations** derived by Zhu et al. (2005) executed via a fixed-point iterative scheme rather than a general-purpose Jacobian non-linear root finder (like `fsolve`). The solver updates $F$ and $\lambda$ analytically at each step using the decoupled equilibrium equations.
+
+#### TASK B3: Base Normal Force
+**Exact Formula:**
+$$N'_i = \frac{W_i - (X_i - X_{i-1}) - \frac{c' b_i \tan\alpha_i}{F}}{ \cos\alpha_i + \frac{\sin\alpha_i \tan\phi'}{F} }$$
+**Explicit inclusion:** Yes, the formulation explicitly includes the interslice shear forces ($X_i$) directly via $\Delta X_i = X_i - X_{i-1}$. It includes the interslice normal forces ($E_i$) implicitly through the Morgenstern-Price assumption linking them: $X_i = \lambda f(x_i) E_i$.
+
+#### TASK B4: Transfer Coefficient (Ψ)
+**Formula:**
+$$\Psi_j = \frac{ \cos\alpha_j (1 - \lambda f_{j-1} \frac{\tan\phi'}{F}) + \sin\alpha_j (\lambda f_{j-1} + \frac{\tan\phi'}{F}) }{ \cos\alpha_j (1 - \lambda f_j \frac{\tan\phi'}{F}) + \sin\alpha_j (\lambda f_j + \frac{\tan\phi'}{F}) }$$
+Using final numerical values ($F = 1.88102$, $\lambda = 0.05310$, $f_1=f_2=1.0$):
+*   **Numerator at j=2:** 1.00193
+*   **Denominator at j=2:** 1.00193
+*   **$\Psi_2$ numerical value:** 1.00000
+
+#### TASK B5: Interslice Function Indexing
+For a given slice '$k$', $f(x)$ is evaluated precisely at the **left vertical boundary** as $f_{k-1}$ (multiplying the incoming normal force $E_{k-1}$) and at the **right vertical boundary** as $f_k$ (multiplying the outgoing normal force $E_k$).
+
+---
+
+### PART C — FINAL SUMMARY
+
+1. **What is the final converged Factor of Safety (FS)?**
+   $F = 1.88102$
+2. **What is the final converged scale factor (λ)?**
+   $\lambda = 0.05310$
+3. **What is the horizontal force residual ($E_n$) at the final boundary?**
+   $E_n = 0.000$ kN
+
+#### Observations
+*   **Sign of α:** Slices 1, 2, and 3 have positive $\alpha$ and contribute positively to the driving shear term. Slices 4 and 5 have negative $\alpha$ and act as resisting slices (negative driving contribution).
+*   **Computation Direction:** $E_j$ is computed strictly **forward** through the slices (from $j=1$ to $j=n$).
+*   **Equilibrium Residual:** The maximum absolute equilibrium residual used to assess convergence was $\|\Delta F\| \le 1\times10^{-5}$, mapping to a force imbalance $|E_n| < 10^{-5}$ kN.
+
+
+
+
+

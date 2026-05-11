@@ -1,0 +1,381 @@
+388 NUMERICAL METHODS IN GEOTECHNICAL ENGINEERING
+7. The global matrices [K] and [P] and the global vector {R} are assemble 8. The time is incremented by adding t.
+9. The excess pore pressure and excess pore pressure gradient at each geometric nodal point are calculated.
+10. The consolidation settlement, total settlement, degree of consolidation, and average excess pore pressures are calculated.
+11. The calculated excess pore pressures, degree of consolidation, consolidation and total settlement, and average excess pore pressure are printed. The excess pore pressures are printed at the points specified by the input data.
+12. The input data specify a termination. This termination is tested. If the problem termination has been reached, the run termination is tested. If not, the
+time increment is tested.
+13. If the time increment for the next time step changes, the element matrices and vectors must be recalculated starting with step 6. If not, the time is incremented (step 8) and the calculations for the next time are processed.
+14. Once a problem has been terminated, the problem control is tested to determine whether additional problem data are present. If not, the run is terminated. If additional data are to be input, the program starts again with the
+new input data.
+
+11-10 A PRACTICAL EXAMPLE
+The following is an example of the use of the preceding analysis and computer programs in solving practical problems concerning the progress of one-
+dimensional consolidation of multilayered soil systems. This problem concerns
+the development of excess pore pressures in the three-layer compressible soil system shown in Fig. 11-9.
+The consolidation properties of the compressible system which exist before any construction activity are listed in Table 11-2. As will be noted later, the soi properties will change during construction.
+The compressible soil system is overlaid by 3 ft of silt with a coefficient of
+permeability of 0.00175 ft2/month. The total system of silt and clay is bounndded at top and bottom by thick, free draining sand deposits. The groundwater able remains above the top of the silt at all times. The silt and clay layers are
+saturated. They remain in the saturated state during and after construction.
+
+Table 11-2 In situ soil properties: three-layer system
+
+Depth,
+ft
+
+Layer
+no.
+
+Thickness, ft
+
+C
+ft2/month
+
+M
+ft²/kip
+
+0-5
+
+1
+
+5
+
+5-10
+
+2
+
+5
+
+10-18
+
+3
+
+8
+
+6.23
+3.40 10.25
+
+0.014 0.005 0.036
+
+Depth (ft.) 3
+0 5
+5
+10
+8
+
+SAND SILT
+
+ONE-DIMENSIONAL CONSOLIDATION 389
+
+CLAY-I
+
+CLAY-II
+
+CLAY-III
+
+18 SAND
+Figure 11-9 Three-layer compressible soil system.
+The sequence of events to be analyzed is as follows:
+1. Dewatering the site in preparation for construction
+2. Erection of the structure 3. Removal of the pumps
+The site is dewatered in the first month. It is assumed that the dewatering
+occurs at a uniform rate in this time. Due to artesian conditions in the lower
+sand, the total stress increment Ao at the end of dewatering is a linear function of depth with a value of 2.503 kips/ft2 at the top of the clay stratum and
+- 1.079 kips/ft2 at the bottom of the stratum.
+The erection phases commence at the end of dewatering (t = 0.5) and consist of the following:
+1. Excavation, which occurs in a 2.5-month time span. The net surface load q at
+the end of excavation (t = 3) is - 2.57 kips/ft2.
+2. Foundation construction, which occurs in a 1-month period after excavation.
+The load increment at the surface of the clay due to the foundation construc-
+tion is 1.37 kips/ft2.
+
+390 NUMERICAL METHODS IN GEOTECHNICAL ENGINEERING
+3. Phase 1 of the superstructure construction, which occurs in a 6-monththh period after the foundation construction. The load increment at the surface of the clay due to this construction phase is 1.24 kips/ft2.
+4. Phase 2 of the superstructure construction, which occurs in a 9.5-mmonth period after phase 1. The loading at the surface of the clay due to this phase is 2.75 kips/ft2.
+5. Phase 3 of the superstructure construction, which occurs in a 7.5-mmonth period after phase 2. The load increment at the surface of clay due to this phase is 3.07 kips/ft2. The structure is assumed to be completed at the end of phase 3.
+It is assumed that all loadings and unloadings during the erection phases
+occur at a uniform rate. It is also assumed that the excavation and construction
+loadings are transmitted uniformly through the clay stratum as total stress increments Ao. A tabulation of the surface load intensity q is presented in Table 11-3.
+The removal of the pumps at 36 months after the commencement of de-
+watering decreases the total stress increment by 3.0 kips/ft2 at the top of the
+stratum and increases the total stress increment by 0.61 kips/ft2 at the botton
+of the stratum.
+The total stress increments Ao(z, t) at the various critical times are summarized in Table 11-4. The values presented are for the top (z = 0) and bottom (z = 18) of the stratum. The distribution of Ao within the stratum is linear.
+
+Table 11-3 Surface load-intensity schedule
+
+Time, months
+
+Net load intensity q, kips/ft2
+
+Activity
+
+0
+
+0
+
+0.5 3.0 4.0
+10.0
+19.5
+27.0 36.0
+
+0
+
+-2.57 -1.20
+0.04 2.79 5.86
+
+Dewatering
+Excavation
+Foundation construction
+Phase 1 Superstructure
+construction
+Phase 2 Superstructure
+construction
+Phase 3 Superstructure construction
+Removal of pumps
+
+Table 11-4 Summary of total stress
+increments
+
+Time t, months
+
+(0, ), kips/ft2
+
+Ar(18, 1), kips/ft2
+
+0+ 0.5 3.0 4.0
+10.0 19.5
+27.0 36.0+
+
+
+2.503 -0.067
+1.303 2.543 5.293 8.363 5.363
+
+0 -1.079 -3.649 -2.279 -1.039
+1.711 4.781
+5.391
+
+ONE-DIMENSIONAL CONSOLIDATION 391
+
+The laboratory data have shown that the soil properties c and m, change with effective stress. A series of trial computer runs linearizes the problem by approximating the relationship between soil properties and effective stress with a relationship between soil properties and time. This relationship is shown in
+Table 11-5.
+Using the data described above, a series of eight problems were prepared. Both PROGRS and FECON1 were used. These eight problems were set up for a single computer run, in which data were passed between successive problems. Thus the excess pore pressure calculations proceeded continuously with due regard to the change in soil properties with time.
+Figure 11-10 presents the development of the total stress increment and excess pore pressure at the center of the middle layer (z = 7.5 ft). This type of result is useful in predicting and monitoring field behavior. Figures 11-11 to 11-13 present the profile of total stress increments and excess pore pressures at various stages of the construction process. Figure 11-11 presents the data at the
+
+Table 11-5 Change of soil properties with time
+
+Time, months
+
+Clay I
+
+C
+ft2/month
+
+m
+ft2/kip
+
+Clay II
+
+C
+ft2/month
+
+mo
+ft2/kip
+
+0+ 0.5 3.0 4.0 10.0
+19.5 27.0 36.0+
+
+6.23 5.27
+7.43
+6.72 6.42
+5.87 5.55
+6.38
+
+0.014 0.010 0.016
+0.023 0.021 0.017 0.012 0.015
+
+3.40 2.45 4.10 3.82 3.72 3.00 2.87 3.64
+
+0.005 0.004 0.005 0.006 0.004 0.003 0.003 0.003
+
+Clay III
+
+C
+ft2/month
+
+m,
+ft2/kip
+
+10.25 8.36 12.28
+10.97
+10.63 9.24 8.76
+11.12
+
+0.036
+0.031 0.042 0.053 0.045 0.038
+0.036 0.042
+
+Total Streesss Increment (ksf.)
+
+0 0.9
+
+392 NUMERICAL METHODS IN GEOTECHNICAL ENGINEERING
+9.01
+
+8.0 7.0
+5.0 4.0
+
+2=0 ft.
+
+SILT
+
+2=5 ft.
+2=7.5 ft. 2=10 ft.
+
+2=18 ft.
+
+SAND
+
+CLAY-I CLAY-II CLAY-III
+
+Total Stress Increment (A0)
+
+3.0
+
+2.0 7.0
+
+Excess Pore Pressure
+
+Excess Pore Pressure
+
+-1.0
+
+-2.0
+
+-3.0
+
+-4.00.1
+
+1.0 Time (months)
+
+10.0
+
+Figure 11-10 PProgress of total stress increment and excess pore pressure.
+
+100.0
+
+end of 3 months, when the excavation is completed. Figure 11-12 ppresents the total stress increment which exists between 27 and 36 months, before the groundwater was raised. The excess pore pressure isochrones presented in Figure 11-12 are for two times, 27 months and 36 months. Figure 11-13 presents the total stress increment which exists immediately after the groundwater is ressttoored to its
+
+-4.0 0
+
+ONE-DIMENSIONAL CONSOLIDATION 393
+
+Excess Pore Pressure and Total Stress Increment (ksf.)
+
+2.0
+
+
+
+2.0
+
+4.0
+
+6.0
+
+8.0
+
+10.0
+
+Total Stress Increment (40)
+
+5.0
+
+Depth of Compressible Stratum (feet)
+
+10.0
+
+15.0
+
+Excess Pore Pressure
+
+18.0
+Figure 11-11 Excess pore pressure and total stress increments at the end of three months.
+
+normal condition (36+ months) and which exists from that time forward. It also
+presents the excess pore pressure isochrones at 36+ and 50 months. The computations were performed at the University of Colorado Computing
+Center. The hardware used was a CDC 6400. The software was the RUN 2.3
+compiler and the KRONOS 2.0 operating system. The full set of eight interconnected problems were computed in one run on July 7, 1974. Compilation, loading, and execution from a FORTRAN source program was accomplished in 68.486 s of central processor time. Loading and execution from a binary object program was accomplished in 55.034 s of central processor time.
+
+394 NUMERICAL METHODS IN GEOTECHNICAL ENGINEERING
+
+-4.0
+
+Excess Pore Pressure and Total Stress Increment (ksf.)
+
+-2.0
+
+0
+
+2.0
+
+4.0
+
+6.0
+
+8.0
+
+Excess Pore Pressure at 36- Months
+5.0
+
+Excess Pore Pressure at 27 Months
+
+10.0
+
+Depth of Compressible Stratum (feet) 
+
+0.0
+
+15.0
+
+18.0
+
+Total Stress Increment (A0)
+
+Figure 11-12 Excess pore pressure and total stress increments at the end of 27 and 36 months: before water table restoration.
+
+-4.0 
+
+ONE-DIMENSIONAL CONSOLIDATION 395
+
+Excess Pore Pressure and Total Stress Increment (ksf.)
+
+-2.0
+
+
+
+2.0
+
+4.0
+
+6.0
+
+8.0
+
+10.0
+
+Excess Pore Pressure at 50 Months
+5.0
+
+Depth of Compressible Stratum (feet)
+Excess PPoorree Pressure at 36+ Months
+
+10.0
+
+15.0
+
+Total Stress Increment (A0)
+
+18.0
+Figure 11-13 Excess pore pressure and total stress increments at the end of 36 and 50 months: after water table restoration.
+
+

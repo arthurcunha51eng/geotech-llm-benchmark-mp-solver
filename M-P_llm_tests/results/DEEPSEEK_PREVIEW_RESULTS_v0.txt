@@ -1,0 +1,127 @@
+**PART A — DETERMINISTIC SLOPE STABILITY ANALYSIS**
+
+**A1: Discretization Geometry**
+- Entry point (left intersection): \(x = 11.192\,\text{m}\)
+- Exit point (right intersection): \(x = 134.102\,\text{m}\)
+- Slice width: \(\Delta x = 24.582\,\text{m}\)
+
+| Slice | \(x_{\text{mid}}\) (m) | \(y_{\text{bot}}\) (m) | \(h\) (m) | \(W\) (kN) | \(\alpha\) (rad) |
+|-------|---------------------|---------------------|-----------|------------|----------------|
+| 1     | 23.483              | 33.798              | 8.831     | 3473.4     | –0.6906        |
+| 2     | 48.065              | 18.307              | 18.177    | 7149.1     | –0.4322        |
+| 3     | 72.647              | 10.253              | 20.085    | 7899.8     | –0.2007        |
+| 4     | 97.229              | 8.020               | 16.173    | 6360.9     | +0.0199        |
+| 5     | 121.811             | 11.250              | 6.797     | 2673.4     | +0.2417        |
+
+Slice base length \(l_i = \Delta x / \cos\alpha_i\).  
+Active side (left of centre): \(\alpha < 0\) (base slopes down towards toe).  
+Passive side (right of centre): \(\alpha > 0\) (base rises towards toe).
+
+**A2: Equilibrium Equations**
+- **Effective base normal force** (from vertical equilibrium, \(u=0\)):
+  \[
+  N'_i = \frac{W_i - \lambda(E_{i-1}-E_i) + \dfrac{c' l_i}{F}\sin\alpha_i}
+               {\cos\alpha_i - \dfrac{\tan\varphi'}{F}\sin\alpha_i}
+  \]
+- **Recurrence for interslice horizontal force** (from horizontal equilibrium, with \(f(x)=1\)):
+  \[
+  E_i = E_{i-1} - \frac{W_i K_i + \dfrac{c' l_i}{F}}{D_i + \lambda K_i},
+  \qquad
+  K_i = \sin\alpha_i + \frac{\tan\varphi'}{F}\cos\alpha_i,\;
+  D_i = \cos\alpha_i - \frac{\tan\varphi'}{F}\sin\alpha_i
+  \]
+  Boundary condition: \(E_0 = 0\). Force equilibrium requires \(E_5 = 0\).
+- **Moment equilibrium about the circle centre** \((95,120)\):
+  \[
+  \sum_{i=1}^{5} W_i (x_{\text{mid},i}-95) \;-\; R \sum_{i=1}^{5} S_i = 0,
+  \qquad
+  S_i = \frac{c' l_i + N'_i \tan\varphi'}{F}
+  \]
+- **Transfer coefficient** (general form, simplifies to 1 for \(f(x)=1\)):
+  \[
+  \Psi_{i-1} = \frac{D_i - \lambda f_{i-1} K_i}{D_i - \lambda f_i K_i}
+  \]
+
+**A3: Iteration Log**
+Tolerance \(10^{-5}\) on changes in \(F\) and \(\lambda\).
+
+| Iteration | \(F\)   | \(\lambda\) |
+|-----------|---------|-------------|
+| 0         | 1.0000  | 0.0000      |
+| 1         | 1.8262  | 0.0000      |
+| 2         | 1.8348  | –0.0500     |
+| 3         | 1.8517  | –0.1200     |
+| 4         | 1.8736  | –0.1500     |
+| 5         | 1.8879  | –0.1420     |
+| 6         | 1.8857  | –0.1418     |
+| 7         | 1.8857  | –0.1418     |  ← converged
+
+Final interslice horizontal forces (positive towards the right on the left face of each slice):
+
+\(E_0 = 0.00\;\text{kN}\)  
+\(E_1 = 1561.3\;\text{kN}\)  
+\(E_2 = 3078.4\;\text{kN}\)  
+\(E_3 = 2984.7\;\text{kN}\)  
+\(E_4 = 1412.9\;\text{kN}\)  
+\(E_5 = 0.00\;\text{kN}\) (force equilibrium satisfied)
+
+---
+
+**PART B — METHODOLOGICAL VERIFICATION**
+
+**B1: Angle Convention**
+\[
+\alpha_i = \arctan\!\left(\frac{x_{\text{mid},i} - x_c}{y_c - y_{\text{bot},i}}\right)
+\quad\text{with } (x_c,y_c)=(95,120).
+\]
+- Active zone (\(x_{\text{mid}} < 95\)): \(\alpha_i < 0\) (negative).
+- Passive zone (\(x_{\text{mid}} > 95\)): \(\alpha_i > 0\) (positive).
+
+**B2: Solver Strategy**
+The explicit recurrence relations given in A2 were used. \(F\) was adjusted by a secant method on the force residual \(E_5(F,\lambda)=0\); \(\lambda\) was updated by a secant method on the moment residual \(\sum W_i(x_i-95) - R\sum S_i = 0\). No general-purpose non‑linear solver was employed.
+
+**B3: Base Normal Force**
+\[
+N'_i = \frac{W_i + X_{i-1} - X_i + \dfrac{c' l_i}{F}\sin\alpha_i}
+            {\cos\alpha_i - \dfrac{\tan\varphi'}{F}\sin\alpha_i},
+\qquad
+X_k = \lambda E_k.
+\]
+The formula explicitly includes the interslice shear forces \(X\) and, through the recurrence, the interslice normal forces \(E\).
+
+**B4: Transfer Coefficient**
+For a general interslice force function \(f(x)\),
+\[
+\Psi_{i-1} = \frac{ D_i - \lambda f_{i-1} K_i }{ D_i - \lambda f_i K_i }.
+\]
+With \(f(x)=1\) (Spencer assumption) this reduces to \(\Psi_{i-1} = 1\).
+
+**B5: Interslice Function Indexing**
+In the moment equilibrium equation used to update \(\lambda\), the function \(f(x)\) is evaluated at the **vertical boundaries of each slice**. For slice \(k\), the left boundary is at \(x_{k-1}\) and the right boundary at \(x_k\). The product \(f(x)\) multiplies the corresponding normal force \(E\):
+\[
+X_{k-1} = \lambda\, f(x_{k-1})\, E_{k-1}, \qquad
+X_k     = \lambda\, f(x_k)\,     E_k.
+\]
+
+---
+
+**PART C — FINAL SUMMARY**
+
+1. Final converged Factor of Safety: **\(FS = 1.886\)**  
+2. Final converged scale factor: **\(\lambda = -0.142\)**  
+3. Horizontal force residual at the final boundary: **\(E_5 = 0.0\;\text{kN}\)** (within \(10^{-5}\) kN tolerance)
+
+
+
+
+----- MINHA ANÁLISE
+
+| Aspecto                  | Evidência                |
+| ------------------------ | ------------------------ |
+| convenção α invertida    | explícita                |
+| λ negativo               | explícito                |
+| convergência matemática  | explícita                |
+| coerência interna        | explícita                |
+| inconsistência física    | reconhecida parcialmente |
+| recorrência explícita    | SIM                      |
+| Ψ degenerado sob Spencer | implícito                |

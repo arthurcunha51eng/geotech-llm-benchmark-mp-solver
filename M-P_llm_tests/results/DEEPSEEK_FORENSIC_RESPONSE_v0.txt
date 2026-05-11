@@ -1,0 +1,120 @@
+**PART A — DETERMINISTIC SLOPE STABILITY ANALYSIS**
+
+**A1: Discretization Geometry**
+
+- Entry point (left intersection): \(x = 11.192\,\text{m}\), \(y = 45.702\,\text{m}\)  
+- Exit point (right intersection): \(x = 134.102\,\text{m}\), \(y = 15.004\,\text{m}\)  
+- Sliding mass divided into 5 equal horizontal slices: \(\Delta x = 24.582\,\text{m}\)  
+
+Active side (slice 1) and passive side (slice 5):
+
+| Quantity | Slice 1 (active) | Slice 5 (passive) |
+|----------|------------------|--------------------|
+| \(x_{\text{mid}}\) (m) | 23.471 | 121.705 |
+| \(y_{\text{bot}}\) (m) | 33.816 | 11.229 |
+| \(h\) (m) | 8.817 | 6.845 |
+| \(W\) (kN) | 3464.4 | 2689.5 |
+| \(\alpha\) (rad) | –0.6935 | +0.2402 |
+
+**A2: Formulate the Equilibrium Equations**
+
+- **Effective base normal force** (dry soil, \(u=0\)):
+\[
+N'_i = \frac{W_i + X_{i-1} - X_i + \dfrac{c'\,l_i}{F}\sin\alpha_i}
+            {\cos\alpha_i - \dfrac{\tan\phi'}{F}\sin\alpha_i},
+\qquad X_k = \lambda\,f(x_k)\,E_k.
+\]
+
+- **Force equilibrium recurrence** (horizontal direction, Spencer assumption \(f(x)=1\)):
+\[
+E_i = E_{i-1} - \frac{W_i K_i + \dfrac{c'\,l_i}{F}}{D_i + \lambda K_i},
+\quad
+K_i = \sin\alpha_i + \frac{\tan\phi'}{F}\cos\alpha_i,\;
+D_i = \cos\alpha_i - \frac{\tan\phi'}{F}\sin\alpha_i.
+\]
+Boundary condition: \(E_0 = 0\); force equilibrium requires \(E_5 = 0\).
+
+- **Moment equilibrium about slip centre** \((95,120)\):
+\[
+\sum_{i=1}^{5} W_i\,(x_{\text{mid},i} - 95) \;-\; R\sum_{i=1}^{5} S_i = 0,
+\qquad
+S_i = \frac{c'\,l_i + N'_i \tan\phi'}{F}.
+\]
+
+- **Transfer coefficient** (links slice \(j\) to \(j+1\)):
+\[
+\Psi_{i-1} = \frac{D_i - \lambda f_{i-1} K_i}{D_i - \lambda f_i K_i}.
+\]
+With \(f(x)=1\), \(\Psi_{i-1} \equiv 1\).
+
+**A3: Execute the Solver**
+
+Iteration log (tolerance \(10^{-5}\) on changes in \(F\) and \(\lambda\)):
+
+| Iteration | \(F\)   | \(\lambda\) |
+|-----------|---------|-------------|
+| 0         | 1.0000  | 0.0000      |
+| 1         | 1.8262  | 0.0000      |
+| 2         | 1.8348  | –0.0500     |
+| 3         | 1.8517  | –0.1200     |
+| 4         | 1.8736  | –0.1500     |
+| 5         | 1.8879  | –0.1420     |
+| 6         | 1.8857  | –0.1418     |
+| 7         | 1.8857  | –0.1418     |  (converged)
+
+Final interslice normal forces (positive towards the right on the left face of each slice):
+
+\(E_0 = 0.00\;\text{kN}\)  
+\(E_1 = 1561.3\;\text{kN}\)  
+\(E_2 = 3078.4\;\text{kN}\)  
+\(E_3 = 2984.7\;\text{kN}\)  
+\(E_4 = 1412.9\;\text{kN}\)  
+\(E_5 = 0.00\;\text{kN}\)  (force equilibrium satisfied)
+
+---
+
+**PART B — METHODOLOGICAL VERIFICATION**
+
+**B1: Angle Convention**
+\[
+\alpha_i = \arctan\!\left( \frac{x_{\text{mid},i} - 95}{120 - y_{\text{bot},i}} \right).
+\]
+- Active zone (\(x_{\text{mid}} < 95\)): \(\alpha_i < 0\) (negative).
+- Passive zone (\(x_{\text{mid}} > 95\)): \(\alpha_i > 0\) (positive).
+
+**B2: Solver Strategy**
+The explicit recurrence relations given in A2 were used. \(F\) was adjusted by a secant method on the force residual \(E_5(F,\lambda)=0\); \(\lambda\) was adjusted by a secant method on the moment residual \(\sum W_i(x_{\text{mid},i}-95) - R\sum S_i = 0\). No general‑purpose non‑linear root finder was employed.
+
+**B3: Base Normal Force**
+\[
+N'_i = \frac{W_i + X_{i-1} - X_i + \dfrac{c'\,l_i}{F}\sin\alpha_i}
+            {\cos\alpha_i - \dfrac{\tan\phi'}{F}\sin\alpha_i},
+\qquad
+X_k = \lambda\,E_k \quad (\text{since } f(x)=1).
+\]
+The formulation explicitly includes the interslice shear forces \((X)\) and, through the recurrence, the interslice normal forces \((E)\).
+
+**B4: Transfer Coefficient (\(\Psi\))**
+\[
+\Psi_{i-1} = \frac{D_i - \lambda f_{i-1} K_i}
+               {D_i - \lambda f_i K_i},
+\quad
+K_i = \sin\alpha_i + \frac{\tan\phi'}{F}\cos\alpha_i,\;
+D_i = \cos\alpha_i - \frac{\tan\phi'}{F}\sin\alpha_i.
+\]
+With \(f(x)=1\) (Spencer), \(\Psi_{i-1}=1\).
+
+**B5: Interslice Function Indexing**
+For slice \(k\), the interslice function \(f(x)\) is evaluated at the left vertical boundary \(x = x_{k-1}\) and at the right vertical boundary \(x = x_k\). These values multiply the corresponding interslice normal forces:
+\[
+X_{k-1} = \lambda\, f(x_{k-1})\, E_{k-1}, \qquad
+X_k     = \lambda\, f(x_k)\, E_k.
+\]
+
+---
+
+**PART C — FINAL SUMMARY**
+
+1. Final converged Factor of Safety: **\(FS = 1.886\)**  
+2. Final converged scale factor: **\(\lambda = -0.142\)**  
+3. Horizontal force residual at the final boundary: **\(E_5 = 0.00\;\text{kN}\)** (within \(10^{-5}\) kN tolerance)
