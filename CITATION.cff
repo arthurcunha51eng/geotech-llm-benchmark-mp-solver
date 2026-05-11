@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite this work."
+
+title: "Morgenstern-Price Solver (Zhu et al., 2005) — Geotechnical LLM Benchmark"
+
+type: software
+
+authors:
+  - family-names: "Cunha da Silva"
+    given-names: "Arthur"
+
+version: "1.0.0"
+
+doi: "10.5281/zenodo.20125826"
+
+date-released: "2026-05-11"
+
+license: MIT
+
+url: "https://github.com/arthurcunha51eng/geotech-llm-benchmark-mp-solver"
